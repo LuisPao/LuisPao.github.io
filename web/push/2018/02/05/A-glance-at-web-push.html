@@ -111,7 +111,7 @@
 
             <p>首先，要获取当前用户浏览器在当前应用域名下<strong>通知</strong>的 <strong>permission</strong> 。我们最常见的是获取用户地理信息的 permission ，获取通知 permission 也类似，通过 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API">Pemission APIs</a>  在<em>特定时机</em> 以 <em>最佳策略</em> 弹出弹窗供用户选择。这是至关重要的一步，我们要想方设法让用户只会点”允许“的按钮。</p>
 
-            <p><img src="http://localhost:4000/assets/image/notification-permission.png" alt="PC-Chrome" /></p>
+            <p><img src="/assets/image/notification-permission.png" alt="PC-Chrome" /></p>
 
             <p>接着，假设浏览器已经支持 Service Worker 和 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Push_API">Push APIs</a> ， 那我们要先注册 Service Worker 文件并通过 Push APIs 获取到 <strong>PushSubscription</strong> （后简写：PushSub）。   PushSub 是一个Object ，属于 Push APIs ，里面包含了当前用户的信息，需要交由服务端来保存管理，服务端触发推送要依赖 PushSub 才能推送给目标用户。</p>
 
@@ -143,7 +143,7 @@
 
             <p>上面有提到浏览器厂商可以为自己提供一套 Push Service 或者采用第三方的服务，对于应用开发者来说，我们无需也无权关心 Push Service 。那这里就有个问题：我们推一条消息给用户，要经过 Push Service 这个中间环节，而且浏览器厂商是随己意选择 Push Service ，那信息安全何在？实际上， push 过程需要遵循一套标准的协议，即 <strong>Web Push Protocal</strong> ，这是一项 <u>IETF 标准</u>，规定了我们应当如何调用 Push Service 的API ，譬如规定了特定的头部信息，以及如何对消息体进行加密等。</p>
 
-            <p><img src="http://localhost:4000/assets/image/server-to-push-service.svg" alt="web-push-process" /></p>
+            <p><img src="/assets/image/server-to-push-service.svg" alt="web-push-process" /></p>
           </li>
           <li>
             <p>Step 3</p>
