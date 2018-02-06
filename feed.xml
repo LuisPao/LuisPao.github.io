@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.6.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-02-06T15:46:01+08:00</updated><id>http://localhost:4000/</id><title type="html">Pao</title><subtitle></subtitle><entry><title type="html">初识 web push</title><link href="http://localhost:4000/web/push/2018/02/05/A-glance-at-web-push.html" rel="alternate" type="text/html" title="初识 web push" /><published>2018-02-05T10:19:17+08:00</published><updated>2018-02-05T10:19:17+08:00</updated><id>http://localhost:4000/web/push/2018/02/05/A%20glance%20at%20web%20push</id><content type="html" xml:base="http://localhost:4000/web/push/2018/02/05/A-glance-at-web-push.html">&lt;ul&gt;
+  &lt;li&gt;推送的价值
+    &lt;ul&gt;
+      &lt;li&gt;客户端消息推送对于提升用户体验有很重要作用，我们可以想象1个场景，譬如你用某抢票软件，假如你没有预付，那么抢到后它及时通知你就非常有价值；另外还有到货通知等情景。这种类型的通知比较个性化的，一般有电话，短信，或者客户端的推送几种方式可以选择。对客户端推送更常见的场景就是新闻资讯类的应用，根据用户的订阅或浏览记录，给用户不定时推送一些ta感兴趣的内容，一方面服务了用户，另一方面从运营来说，可以提升了留存，日活，月活。&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;PWA 带来的 web push
+    &lt;ul&gt;
+      &lt;li&gt;我们以往只能在原生应用体验到推送的服务，虽然我们依旧在移动互联网浪潮里面，但是还是有一部分用户选择浏览器来满足他们的需求。Google 这两年一直在推的 PWA ，对于 web 开发人员来说，我们又进一步看到了“ web 一统天下”的一丝丝曙光，但这个信念的落地现在还为时尚早，或者永远都不可能。不过我们更该关注的是PWA到底带来了什么新的标准，让我们可以更好的服务用户。其中 web push 就是PWA带来的一个重要的特性，让使用浏览器的用户也能享受到推送的服务。&lt;/li&gt;
+      &lt;li&gt;PWA现在推的进展如何？上个月（2017-12）苹果的桌面版 Safari 46 preview 支持了 &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API&quot;&gt;service worker&lt;/a&gt; ，本月  IOS11.3  也跟上了 PC 的节奏。首先， service worker 是支持 web push 最基础的功能，其次，我们更多是看到苹果有心参与到 PWA 的建设工作中。&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;实现&lt;/p&gt;
+
+    &lt;p&gt;web push 最新标准和具体实现有很多内容可以分享，所以我将分多篇文章来展开。内容主要参照 &lt;a href=&quot;https://developers.google.com/web/fundamentals/&quot;&gt;Google web fundamentals&lt;/a&gt; ，经由笔者的理解并归纳，倘若更新不及时或者有偏差，请以 Google web fundamentals 为准。&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;
+        &lt;p&gt;鸟瞰&lt;/p&gt;
+
+        &lt;p&gt;在深入剖析之前，我们需要对整个 Push 过程有个概览，这里面会牵涉到相关的 web APIs 或一些从未接触的概念，此篇先简单带过，后续会对重要的概念进一步介绍。&lt;/p&gt;
+
+        &lt;p&gt;实现 web push 主要有三个关键的点：1）客户端订阅推送服务、2）服务端触发推送、3）客户端展示推送内容。&lt;/p&gt;
+
+        &lt;ul&gt;
+          &lt;li&gt;
+            &lt;p&gt;Step 1 订阅推送&lt;/p&gt;
+
+            &lt;p&gt;首先，要获取当前用户浏览器在当前应用域名下&lt;strong&gt;通知&lt;/strong&gt;的 &lt;strong&gt;permission&lt;/strong&gt; 。我们最常见的是获取用户地理信息的 permission ，获取通知 permission 也类似，通过 &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API&quot;&gt;Pemission APIs&lt;/a&gt;  在&lt;em&gt;特定时机&lt;/em&gt; 以 &lt;em&gt;最佳策略&lt;/em&gt; 弹出弹窗供用户选择。这是至关重要的一步，我们要想方设法让用户只会点”允许“的按钮。&lt;/p&gt;
+
+            &lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/image/notification-permission.png&quot; alt=&quot;PC-Chrome&quot; /&gt;&lt;/p&gt;
+
+            &lt;p&gt;接着，假设浏览器已经支持 Service Worker 和 &lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/API/Push_API&quot;&gt;Push APIs&lt;/a&gt; ， 那我们要先注册 Service Worker 文件并通过 Push APIs 获取到 &lt;strong&gt;PushSubscription&lt;/strong&gt; （后简写：PushSub）。   PushSub 是一个Object ，属于 Push APIs ，里面包含了当前用户的信息，需要交由服务端来保存管理，服务端触发推送要依赖 PushSub 才能推送给目标用户。&lt;/p&gt;
+
+            &lt;p&gt;我们可以把 PushSub 理解为用户在当前浏览器当前应用域名下的  id  ，那它到底是怎么生成的？应用需要有一对 Keys ，称为 &lt;strong&gt;application server keys&lt;/strong&gt;，服务端保留 private key ，而 public key 可以公开，客户端在订阅推送服务调用 Push API 的时候就要用到 public key ， promise-based 的 Push API 就会拿到 PushSub 。这里得先引入另外一个概念： &lt;strong&gt;Push Service&lt;/strong&gt; ，在生成 PushSub 过程中，是得依赖于 Push Service ，它可以是浏览器厂商自己搭建的，也可以由第三方提供。 Push Service 根据应用的 public key ，返回 PushSub 给浏览器，服务端再保存。&lt;/p&gt;
+          &lt;/li&gt;
+          &lt;li&gt;
+            &lt;p&gt;Step 2 触发推送&lt;/p&gt;
+
+            &lt;p&gt;我们先来看看服务端保存的 PushSub 长什么样&lt;/p&gt;
+
+            &lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;endpoint&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;https://random-push-service.com/some-kind-of-unique-id-1234/v2/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;keys&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;p256dh&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;auth&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;tBHItJI5svbpez7KI4CCXg==&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;            &lt;/div&gt;
+
+            &lt;p&gt;endpoint 就是一个 URL ，“https://random-push-service.com”  就是 Push Service 的域名， 后面的路径是订阅用户的唯一标志，至于 keys 字段，用于服务端推送过程消息体加密，暂不展开。&lt;/p&gt;
+
+            &lt;p&gt;简单来说，服务端触发推送，就是根据 web push 标准调用 endpoint (即 Push Service ) ， Push Service 接受请求、校验，再将消息推给目标浏览器。如果用户是离线状态，消息会在 Push Service 排队直到用户在线再推给用户。不过，我们也可以控制消息在 Push Service 的排队情况，譬如：&lt;/p&gt;
+
+            &lt;ul&gt;
+              &lt;li&gt;设置消息的有效时长，假如用户一直离线，消息超过了有效时长，Push Service 就会移除消息&lt;/li&gt;
+              &lt;li&gt;定义消息的紧急程度，保证高优先级的消息推给用户&lt;/li&gt;
+              &lt;li&gt;给推送的新消息一个 ”topic” 名，可以取代还在等待的旧消息。&lt;/li&gt;
+            &lt;/ul&gt;
+
+            &lt;p&gt;上面有提到浏览器厂商可以为自己提供一套 Push Service 或者采用第三方的服务，对于应用开发者来说，我们无需也无权关心 Push Service 。那这里就有个问题：我们推一条消息给用户，要经过 Push Service 这个中间环节，而且浏览器厂商是随己意选择 Push Service ，那信息安全何在？实际上， push 过程需要遵循一套标准的协议，即 &lt;strong&gt;Web Push Protocal&lt;/strong&gt; ，这是一项 &lt;u&gt;IETF 标准&lt;/u&gt;，规定了我们应当如何调用 Push Service 的API ，譬如规定了特定的头部信息，以及如何对消息体进行加密等。&lt;/p&gt;
+
+            &lt;p&gt;&lt;img src=&quot;http://localhost:4000/assets/image/server-to-push-service.svg&quot; alt=&quot;web-push-process&quot; /&gt;&lt;/p&gt;
+          &lt;/li&gt;
+          &lt;li&gt;
+            &lt;p&gt;Step 3&lt;/p&gt;
+
+            &lt;p&gt;客户端展示&lt;/p&gt;
+
+            &lt;p&gt;前面我们有提到 Service Worker 在实现 web push 的关键性，它是独立于浏览器主线程之外的 Worker ，作用很多，读者可以自行扩展对它的认识。对于开发者来说，它就是一个 JS 文件，我们在主线程中注册这个文件，浏览器就开启了新的线程跑文件中的 JS 代码。 sw 要在全局注册 push 事件，当推送消息抵达浏览器，浏览器解密并触发 sw 的 push 事件，我们可以对消息体进行分析处理再调用展示的 API 。&lt;/p&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;小结&lt;/p&gt;
+
+        &lt;p&gt;本文旨在让我们先对整个消息推送流程有个概览，同时我在文中也把一些主要的概念提出来，想加快了解 web push 的同学可以根据文本中的超链进行补充。&lt;/p&gt;
+
+        &lt;p&gt;欢迎斧正。&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;参考&lt;/p&gt;
+
+        &lt;p&gt;&lt;a href=&quot;https://web-push-book.gauntface.com/chapter-01/02-how-push-works/&quot;&gt;https://web-push-book.gauntface.com/chapter-01/02-how-push-works/&lt;/a&gt;&lt;/p&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;​&lt;/p&gt;
+
+    &lt;p&gt;​&lt;/p&gt;
+
+    &lt;p&gt;​&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</content><author><name></name></author><summary type="html">推送的价值 客户端消息推送对于提升用户体验有很重要作用，我们可以想象1个场景，譬如你用某抢票软件，假如你没有预付，那么抢到后它及时通知你就非常有价值；另外还有到货通知等情景。这种类型的通知比较个性化的，一般有电话，短信，或者客户端的推送几种方式可以选择。对客户端推送更常见的场景就是新闻资讯类的应用，根据用户的订阅或浏览记录，给用户不定时推送一些ta感兴趣的内容，一方面服务了用户，另一方面从运营来说，可以提升了留存，日活，月活。</summary></entry></feed>
